@@ -1,0 +1,380 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Procesador de Planillas Excel</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="{{ url_for('static', filename='css/style.css') }}" rel="stylesheet">
+</head>
+<body class="bg-light">
+    <div class="container-fluid px-3 px-md-4 mt-4">
+        <!-- Header -->
+        <div class="row justify-content-center mb-4">
+            <div class="col-12 col-lg-10">
+                <div class="card border-0 shadow-lg bg-gradient-primary text-white header-card">
+                    <div class="card-body text-center py-3 py-md-4">
+                        <div class="header-icon mb-2">
+                            <i class="fas fa-file-excel"></i>
+                        </div>
+                        <h1 class="h2 mb-3 fw-bold">
+                            Procesador de Planillas Excel
+                        </h1>
+                        <p class="lead fs-6 mb-0 opacity-90">
+                            Unifica múltiples archivos Excel en una sola planilla formateada profesionalmente
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Mensajes Flash -->
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                <div class="row mb-4">
+                    <div class="col-12">
+                        {% for category, message in messages %}
+                            <div class="alert alert-{{ 'danger' if category == 'error' else 'warning' if category == 'warning' else 'info' if category == 'info' else 'success' }} alert-dismissible fade show shadow-sm" role="alert">
+                                <i class="fas fa-{{ 'exclamation-triangle' if category == 'error' else 'exclamation-circle' if category == 'warning' else 'info-circle' if category == 'info' else 'check-circle' }} me-2"></i>
+                                {{ message }}
+                                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                            </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            {% endif %}
+        {% endwith %}
+
+        <div class="row justify-content-center">
+            <!-- Panel de Carga de Archivos -->
+            <div class="col-12 col-xl-8 mb-4">
+                <div class="card border-0 shadow-sm mb-4">
+                    <div class="card-header bg-white border-bottom">
+                        <h6 class="card-title mb-0">
+                            <i class="fas fa-upload text-primary me-2"></i>
+                            Cargar Archivos Excel
+                        </h6>
+                    </div>
+                    <div class="card-body">
+                        <form action="/upload" method="post" enctype="multipart/form-data" id="uploadForm">
+                            <div class="mb-4">
+                                <label for="files" class="form-label fw-bold">
+                                    <i class="fas fa-folder-open me-1"></i>
+                                    Seleccionar Archivos (.xls, .xlsx)
+                                </label>
+                                <input type="file" class="form-control form-control-lg" id="files" name="files" 
+                                       multiple accept=".xls,.xlsx" required>
+                                <div class="form-text">
+                                    <i class="fas fa-info-circle me-1"></i>
+                                    Puedes seleccionar múltiples archivos. Máximo 50MB total.
+                                </div>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" value="true" id="clear_before" name="clear_before">
+                                    <label class="form-check-label" for="clear_before">
+                                        <i class="fas fa-broom me-1"></i>
+                                        Limpiar archivos anteriores antes de subir
+                                    </label>
+                                </div>
+                            </div>
+                            
+                            <div class="d-grid">
+                                <button type="submit" class="btn btn-primary btn-lg" id="uploadBtn">
+                                    <i class="fas fa-cloud-upload-alt me-2"></i>
+                                    Cargar Archivos
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- Archivos Cargados -->
+                {% if uploaded_files %}
+                <div class="card border-0 shadow-sm mb-4">
+                    <div class="card-header bg-success text-white">
+                        <h6 class="card-title mb-0">
+                            <i class="fas fa-check-circle me-2"></i>
+                            Archivos Cargados ({{ uploaded_files|length }})
+                        </h6>
+                    </div>
+                    <div class="card-body p-0">
+                        <div class="table-responsive">
+                            <table class="table table-hover mb-0">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th><i class="fas fa-file-excel text-success me-1"></i> Archivo</th>
+                                        <th><i class="fas fa-weight-hanging me-1"></i> Tamaño</th>
+                                        <th><i class="fas fa-clock me-1"></i> Modificado</th>
+                                        <th class="text-center"><i class="fas fa-check-circle me-1"></i> Estado</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for file in uploaded_files %}
+                                    <tr>
+                                        <td>
+                                            <i class="fas fa-file-excel text-success me-2"></i>
+                                            <strong>{{ file.name if file.name else file }}</strong>
+                                        </td>
+                                        <td>
+                                            <span class="badge bg-light text-dark">{{ file.size if file.size else 'N/A' }}</span>
+                                        </td>
+                                        <td>
+                                            <small class="text-muted">{{ file.modified if file.modified else 'N/A' }}</small>
+                                        </td>
+                                        <td class="text-center">
+                                            <div class="btn-group" role="group">
+                                                <span class="badge bg-success me-2">
+                                                    <i class="fas fa-check me-1"></i>Listo
+                                                </span>
+                                                <form method="post" action="/delete/{{ file.name if file.name else file }}" class="d-inline" 
+                                                      onsubmit="return confirm('¿Estás seguro de eliminar este archivo?')">
+                                                    <button type="submit" class="btn btn-sm btn-outline-danger" title="Eliminar archivo">
+                                                        <i class="fas fa-trash-alt"></i>
+                                                    </button>
+                                                </form>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Panel de Procesamiento -->
+                <div class="card border-0 shadow-sm mb-4">
+                    <div class="card-header bg-warning text-dark">
+                        <h6 class="card-title mb-0">
+                            <i class="fas fa-cogs me-2"></i>
+                            Procesar Archivos
+                        </h6>
+                    </div>
+                    <div class="card-body">
+                        <form action="/process" method="post" id="processForm">
+                            <div class="mb-4">
+                                <label for="custom_name" class="form-label fw-bold">
+                                    <i class="fas fa-tag me-1"></i>
+                                    Nombre del Archivo Final (Opcional)
+                                </label>
+                                <input type="text" class="form-control" id="custom_name" 
+                                       name="custom_name" placeholder="Mi_Planilla_Unificada">
+                                <div class="form-text">
+                                    <i class="fas fa-lightbulb me-1"></i>
+                                    Si no especificas un nombre, se usará "Planilla_Unificada_Final.xlsx"
+                                </div>
+                            </div>
+                            
+                            <div class="row g-3">
+                                <div class="col-12 col-md-8">
+                                    <button type="submit" class="btn btn-success btn-lg w-100 pulse-btn" id="processBtn">
+                                        <i class="fas fa-magic me-2"></i>
+                                        <span class="d-none d-sm-inline">Procesar</span> Archivos
+                                    </button>
+                                </div>
+                                <div class="col-12 col-md-4">
+                                    <a href="/clear" class="btn btn-outline-danger btn-lg w-100" onclick="return confirm('¿Estás seguro de que quieres eliminar todos los archivos?')">
+                                        <i class="fas fa-trash-alt me-2"></i>
+                                        Limpiar
+                                    </a>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+
+            <!-- Panel de Información -->
+            <div class="col-12 col-xl-4">
+                <div class="card border-0 shadow-sm mb-4">
+                    <div class="card-header bg-info text-white">
+                        <h6 class="card-title mb-0">
+                            <i class="fas fa-question-circle me-2"></i>
+                            ¿Cómo funciona?
+                        </h6>
+                    </div>
+                    <div class="card-body">
+                        <ol class="mb-0">
+                            <li class="mb-2">
+                                <i class="fas fa-upload text-primary me-2"></i>
+                                <strong>Sube tus archivos</strong> Excel (.xls o .xlsx)
+                            </li>
+                            <li class="mb-2">
+                                <i class="fas fa-edit text-warning me-2"></i>
+                                <strong>Personaliza</strong> el nombre del archivo final (opcional)
+                            </li>
+                            <li class="mb-2">
+                                <i class="fas fa-cogs text-success me-2"></i>
+                                <strong>Procesa</strong> haciendo clic en "Procesar Archivos"
+                            </li>
+                            <li class="mb-0">
+                                <i class="fas fa-download text-info me-2"></i>
+                                <strong>Descarga</strong> tu planilla unificada con formato profesional
+                            </li>
+                        </ol>
+                    </div>
+                </div>
+
+                <div class="card border-0 shadow-sm mb-4">
+                    <div class="card-header bg-secondary text-white">
+                        <h6 class="card-title mb-0">
+                            <i class="fas fa-palette me-2"></i>
+                            Formato Aplicado
+                        </h6>
+                    </div>
+                    <div class="card-body">
+                        <div class="mb-2">
+                            <span class="badge bg-success me-2">Headers</span>
+                            <small>Verde, Negrita, Mayúsculas</small>
+                        </div>
+                        <div class="mb-2">
+                            <span class="badge bg-warning text-dark me-2">Campos Especiales</span>
+                            <small>UE, Programa, Proyecto, etc.</small>
+                        </div>
+                        <div class="mb-2">
+                            <span class="badge bg-danger me-2">Filas de Totales</span>
+                            <small>Resaltadas en naranja</small>
+                        </div>
+                        <div class="mb-0">
+                            <span class="badge bg-info me-2">Fechas</span>
+                            <small>Formato DD/MM/YYYY</small>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card border-0 shadow-sm">
+                    <div class="card-header bg-light">
+                        <h6 class="card-title mb-0">
+                            <i class="fas fa-exclamation-triangle text-warning me-2"></i>
+                            Notas Importantes
+                        </h6>
+                    </div>
+                    <div class="card-body">
+                        <ul class="mb-0 small">
+                            <li class="mb-1">Solo archivos Excel (.xls, .xlsx)</li>
+                            <li class="mb-1">Máximo 50MB por subida</li>
+                            <li class="mb-1">Se omiten las primeras 2 filas de cada archivo</li>
+                            <li class="mb-1">Se conserva una sola cabecera</li>
+                            <li class="mb-0">Los archivos se procesan en orden alfabético</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Loading Modal -->
+    <div class="modal fade" id="loadingModal" tabindex="-1" data-bs-backdrop="static" data-bs-keyboard="false">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-body text-center py-4">
+                    <div class="spinner-border text-primary mb-3" role="status" style="width: 3rem; height: 3rem;">
+                        <span class="visually-hidden">Procesando...</span>
+                    </div>
+                    <h6>Procesando archivos...</h6>
+                    <p class="text-muted mb-0">Por favor espera mientras unificamos tus planillas</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Mostrar loading durante el procesamiento
+        document.getElementById('processForm').addEventListener('submit', function(e) {
+            const btn = document.getElementById('processBtn');
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Procesando...';
+            btn.disabled = true;
+            
+            // Mostrar modal de loading
+            const modal = new bootstrap.Modal(document.getElementById('loadingModal'));
+            modal.show();
+        });
+
+        // Mostrar loading durante la subida
+        document.getElementById('uploadForm').addEventListener('submit', function(e) {
+            const btn = document.getElementById('uploadBtn');
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Subiendo...';
+            btn.disabled = true;
+        });
+
+        // Validar archivos seleccionados
+        document.getElementById('files').addEventListener('change', function() {
+            const files = this.files;
+            const allowedTypes = ['application/vnd.ms-excel', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'];
+            const maxSize = 50 * 1024 * 1024; // 50MB
+            let validFiles = 0;
+            let totalSize = 0;
+            
+            for (let file of files) {
+                const extension = '.' + file.name.split('.').pop().toLowerCase();
+                if (['.xls', '.xlsx'].includes(extension)) {
+                    validFiles++;
+                    totalSize += file.size;
+                }
+            }
+            
+            if (validFiles === 0) {
+                alert('Por favor selecciona al menos un archivo Excel válido (.xls o .xlsx)');
+                this.value = '';
+                return;
+            }
+            
+            if (totalSize > maxSize) {
+                alert(`El tamaño total de los archivos (${(totalSize / 1024 / 1024).toFixed(1)}MB) excede el límite de 50MB`);
+                this.value = '';
+                return;
+            }
+            
+            // Mostrar información de archivos seleccionados
+            const fileInfo = document.getElementById('file-info');
+            if (fileInfo) fileInfo.remove();
+            
+            const info = document.createElement('div');
+            info.id = 'file-info';
+            info.className = 'alert alert-info mt-2';
+            info.innerHTML = `<i class="fas fa-info-circle me-2"></i><strong>${validFiles}</strong> archivo(s) seleccionado(s) - <strong>${(totalSize / 1024 / 1024).toFixed(1)}MB</strong> total`;
+            this.parentElement.appendChild(info);
+        });
+
+        // Auto-dismiss alerts after 5 seconds
+        document.addEventListener('DOMContentLoaded', function() {
+            setTimeout(function() {
+                const alerts = document.querySelectorAll('.alert-dismissible');
+                alerts.forEach(function(alert) {
+                    const bsAlert = new bootstrap.Alert(alert);
+                    if (!alert.classList.contains('alert-error')) {
+                        setTimeout(() => bsAlert.close(), 5000);
+                    }
+                });
+            }, 100);
+        });
+    </script>
+
+    <!-- Footer -->
+    <footer class="bg-dark text-white mt-5 py-4">
+        <div class="container">
+            <div class="row">
+                <div class="col-md-8">
+                    <div class="d-flex align-items-center">
+                        <i class="fas fa-code text-primary me-2"></i>
+                        <span>Desarrollado por <strong>Ing. Jhoel Mauricio Legua Villegas</strong></span>
+                        <span class="badge bg-primary ms-2">DevAI</span>
+                    </div>
+                </div>
+                <div class="col-md-4 text-end">
+                    <div class="d-flex justify-content-end align-items-center">
+                        <i class="fas fa-calendar-alt me-2 text-muted"></i>
+                        <small class="text-muted">2025</small>
+                        <i class="fas fa-heart text-danger ms-2"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </footer>
+</body>
+</html>
