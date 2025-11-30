@@ -57,7 +57,7 @@
                         </h6>
                     </div>
                     <div class="card-body">
-                        <form action="/upload" method="post" enctype="multipart/form-data" id="uploadForm">
+                        <form action="/process" method="post" enctype="multipart/form-data" id="processForm">
                             <div class="mb-4">
                                 <label for="files" class="form-label fw-bold">
                                     <i class="fas fa-folder-open me-1"></i>
@@ -72,120 +72,28 @@
                             </div>
                             
                             <div class="mb-3">
-                                <div class="form-check">
-                                    <input class="form-check-input" type="checkbox" value="true" id="clear_before" name="clear_before">
-                                    <label class="form-check-label" for="clear_before">
-                                        <i class="fas fa-broom me-1"></i>
-                                        Limpiar archivos anteriores antes de subir
-                                    </label>
+                                <label for="custom_name" class="form-label">
+                                    <i class="fas fa-edit me-1"></i>
+                                    Nombre personalizado del archivo (opcional)
+                                </label>
+                                <input type="text" class="form-control" id="custom_name" name="custom_name" 
+                                       placeholder="Ej: Mi_Planilla_Unificada" maxlength="50">
+                                <div class="form-text">
+                                    Si no especificas un nombre, se generará automáticamente con fecha y hora.
                                 </div>
                             </div>
                             
                             <div class="d-grid">
-                                <button type="submit" class="btn btn-primary btn-lg" id="uploadBtn">
-                                    <i class="fas fa-cloud-upload-alt me-2"></i>
-                                    Cargar Archivos
+                                <button type="submit" class="btn btn-success btn-lg" id="processBtn">
+                                    <i class="fas fa-cogs me-2"></i>
+                                    Procesar y Descargar
                                 </button>
                             </div>
                         </form>
                     </div>
                 </div>
 
-                <!-- Archivos Cargados -->
-                {% if uploaded_files %}
-                <div class="card border-0 shadow-sm mb-4">
-                    <div class="card-header bg-success text-white">
-                        <h6 class="card-title mb-0">
-                            <i class="fas fa-check-circle me-2"></i>
-                            Archivos Cargados ({{ uploaded_files|length }})
-                        </h6>
-                    </div>
-                    <div class="card-body p-0">
-                        <div class="table-responsive">
-                            <table class="table table-hover mb-0">
-                                <thead class="table-light">
-                                    <tr>
-                                        <th><i class="fas fa-file-excel text-success me-1"></i> Archivo</th>
-                                        <th><i class="fas fa-weight-hanging me-1"></i> Tamaño</th>
-                                        <th><i class="fas fa-clock me-1"></i> Modificado</th>
-                                        <th class="text-center"><i class="fas fa-check-circle me-1"></i> Estado</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {% for file in uploaded_files %}
-                                    <tr>
-                                        <td>
-                                            <i class="fas fa-file-excel text-success me-2"></i>
-                                            <strong>{{ file.name if file.name else file }}</strong>
-                                        </td>
-                                        <td>
-                                            <span class="badge bg-light text-dark">{{ file.size if file.size else 'N/A' }}</span>
-                                        </td>
-                                        <td>
-                                            <small class="text-muted">{{ file.modified if file.modified else 'N/A' }}</small>
-                                        </td>
-                                        <td class="text-center">
-                                            <div class="btn-group" role="group">
-                                                <span class="badge bg-success me-2">
-                                                    <i class="fas fa-check me-1"></i>Listo
-                                                </span>
-                                                <form method="post" action="/delete/{{ file.name if file.name else file }}" class="d-inline" 
-                                                      onsubmit="return confirm('¿Estás seguro de eliminar este archivo?')">
-                                                    <button type="submit" class="btn btn-sm btn-outline-danger" title="Eliminar archivo">
-                                                        <i class="fas fa-trash-alt"></i>
-                                                    </button>
-                                                </form>
-                                            </div>
-                                        </td>
-                                    </tr>
-                                    {% endfor %}
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-                </div>
 
-                <!-- Panel de Procesamiento -->
-                <div class="card border-0 shadow-sm mb-4">
-                    <div class="card-header bg-warning text-dark">
-                        <h6 class="card-title mb-0">
-                            <i class="fas fa-cogs me-2"></i>
-                            Procesar Archivos
-                        </h6>
-                    </div>
-                    <div class="card-body">
-                        <form action="/process" method="post" id="processForm">
-                            <div class="mb-4">
-                                <label for="custom_name" class="form-label fw-bold">
-                                    <i class="fas fa-tag me-1"></i>
-                                    Nombre del Archivo Final (Opcional)
-                                </label>
-                                <input type="text" class="form-control" id="custom_name" 
-                                       name="custom_name" placeholder="Mi_Planilla_Unificada">
-                                <div class="form-text">
-                                    <i class="fas fa-lightbulb me-1"></i>
-                                    Si no especificas un nombre, se usará "Planilla_Unificada_Final.xlsx"
-                                </div>
-                            </div>
-                            
-                            <div class="row g-3">
-                                <div class="col-12 col-md-8">
-                                    <button type="submit" class="btn btn-success btn-lg w-100 pulse-btn" id="processBtn">
-                                        <i class="fas fa-magic me-2"></i>
-                                        <span class="d-none d-sm-inline">Procesar</span> Archivos
-                                    </button>
-                                </div>
-                                <div class="col-12 col-md-4">
-                                    <a href="/clear" class="btn btn-outline-danger btn-lg w-100" onclick="return confirm('¿Estás seguro de que quieres eliminar todos los archivos?')">
-                                        <i class="fas fa-trash-alt me-2"></i>
-                                        Limpiar
-                                    </a>
-                                </div>
-                            </div>
-                        </form>
-                    </div>
-                </div>
-                {% endif %}
             </div>
 
             <!-- Panel de Información -->
@@ -275,8 +183,9 @@
                     <div class="spinner-border text-primary mb-3" role="status" style="width: 3rem; height: 3rem;">
                         <span class="visually-hidden">Procesando...</span>
                     </div>
-                    <h6>Procesando archivos...</h6>
-                    <p class="text-muted mb-0">Por favor espera mientras unificamos tus planillas</p>
+                    <h6>Procesando y descargando archivo...</h6>
+                    <p class="text-muted mb-0">Tu planilla unificada se descargará automáticamente</p>
+                    <small class="text-info">Este modal se cerrará cuando termine el proceso</small>
                 </div>
             </div>
         </div>
@@ -293,13 +202,33 @@
             // Mostrar modal de loading
             const modal = new bootstrap.Modal(document.getElementById('loadingModal'));
             modal.show();
-        });
-
-        // Mostrar loading durante la subida
-        document.getElementById('uploadForm').addEventListener('submit', function(e) {
-            const btn = document.getElementById('uploadBtn');
-            btn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Subiendo...';
-            btn.disabled = true;
+            
+            // Detectar cuando la descarga se inicia y cerrar modal después de unos segundos
+            setTimeout(function() {
+                // Restaurar botón
+                btn.innerHTML = '<i class="fas fa-cogs me-2"></i>Procesar Archivos';
+                btn.disabled = false;
+                
+                // Cerrar modal
+                modal.hide();
+                
+                // Mostrar mensaje de éxito
+                const successAlert = document.createElement('div');
+                successAlert.className = 'alert alert-success alert-dismissible fade show mt-3';
+                successAlert.innerHTML = `
+                    <i class="fas fa-check-circle me-2"></i>
+                    <strong>¡Procesamiento completado!</strong> Tu archivo se ha descargado correctamente.
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                `;
+                document.querySelector('.container-fluid').insertBefore(successAlert, document.querySelector('.row'));
+                
+                // Auto-cerrar el alert después de 5 segundos
+                setTimeout(function() {
+                    if (successAlert.parentNode) {
+                        successAlert.remove();
+                    }
+                }, 5000);
+            }, 8000); // 8 segundos para dar tiempo al procesamiento
         });
 
         // Validar archivos seleccionados
